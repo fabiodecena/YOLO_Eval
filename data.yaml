@@ -1,0 +1,12 @@
+# Dataset Root Directory
+path: ../datasets/FLIR  
+
+# Relative paths to images (YOLO will look for 'labels' automatically)
+train: images/train  
+val: images/val      
+test: images/test
+
+# Classes
+nc: 1                 # Number of classes
+names:
+  0: person           # YOLO Class 0 maps to FLIR Category ID 1

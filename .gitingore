@@ -1,0 +1,54 @@
+# --- Python / PyCharm ---
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+.idea/
+.vscode/
+
+# --- YOLO / Ultralytics ---
+# Exclude the entire runs folder (logs, intermediate weights, and validation plots)
+runs/
+# Exclude specific weight files if they aren't in /runs
+*.pt
+*.onnx
+*.engine
+
+# --- Datasets ---
+# Never push raw or processed image datasets to GitHub
+datasets/
+data/raw/
+data/processed/
+runs/
+*.jpg
+*.png
+*.jpeg
+*.tif
+*.tiff
+
+# --- R Statistical Analysis ---
+.Rhistory
+.RData
+.Ruserdata
+.Rproj.user/
+.Rapp.history
+# If using RStudio
+*.Rproj
+
+# --- Large Data Files ---
+# Ignore the generated CSVs if they become too large (>50MB)
+*.csv
+*.xlsx
+
+# --- Thesis / Documentation ---
+*.aux
+*.log
+*.toc
+*.pdf
+*.out
+
+# --- OS Specific ---
+.DS_Store
+Thumbs.db
