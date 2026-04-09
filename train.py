@@ -3,7 +3,8 @@ from ultralytics import YOLO
 
 def run_transfer_learning():
     # 1. Load the model
-    model = YOLO('yolo11n.pt')
+    # The 'n' indicates the nano version, suitable for drone/edge deployment.
+    model = YOLO('yolo26n.pt')
 
     # 2. Automatically select device
     # Uses GPU (0) if available, otherwise falls back to CPU
@@ -16,7 +17,7 @@ def run_transfer_learning():
         epochs=100,
         imgsz=640,
         batch=16 if current_device == 0 else 4, # Smaller batch for CPU
-        name='flir_thermal_yolo11',
+        name='flir_thermal_yolo26',
         device=current_device,
         pretrained=True,
         optimizer='SGD',
