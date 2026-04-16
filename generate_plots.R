@@ -1,109 +1,114 @@
 library(tidyverse)
 library(scales)
+library(ggplot2)
 
-# 1. Load Data
-data <- read.csv("LME_Ready_Data_Degraded.csv")
+# ==========================================
+# 1. LOAD DATA
+# ==========================================
+# Read the semicolon-separated CSV
+data <- read.csv("LME_Ready_Data_Degraded.csv", sep = ";")
 
 # Clean pandas index column if present
 if ("Unnamed..0" %in% colnames(data)) {
   data <- data %>% select(-Unnamed..0)
 }
 
-# --- CRITICAL FIX: Focus only on frames with Objects ---
-# mAP is -1.0 when there is no ground truth.
-# We filter these out to see how models actually perform on targets.
+# Focus only on frames with Objects (mAP >= 0)
 data_objects_only <- data %>%
   filter(mAP_50 >= 0)
 
-# 2. Pre-processing
-data_objects_only$Model <- as.factor(data_objects_only$Model)
+# Factorize models to keep them in a logical order
+data_objects_only$Model <- factor(data_objects_only$Model, levels = c("YOLO11n", "YOLO12n", "YOLO26n"))
 data_objects_only$Degradation_Type <- as.factor(data_objects_only$Degradation_Type)
 
-# Clean up latency: Remove warm-up spikes
-data_clean <- data_objects_only %>%
-  filter(Inference_ms < 200)
+# ==========================================
+# 2. APPLY TUKEY'S FENCE (IQR) FOR LATENCY
+# ==========================================
+# We group by Model, Type, and Stress to remove jitter without losing architectural differences
+data_clean_latency <- data_objects_only %>%
+  group_by(Model, Degradation_Type, Normalized_Stress) %>%
+  mutate(
+    Q1 = quantile(Inference_ms, 0.25, na.rm = TRUE),
+    Q3 = quantile(Inference_ms, 0.75, na.rm = TRUE),
+    IQR_val = Q3 - Q1,
+    Upper = Q3 + (1.5 * IQR_val),
+    Lower = Q1 - (1.5 * IQR_val)
+  ) %>%
+  # Filter only the latency metrics; we keep all accuracy data
+  filter(Inference_ms >= Lower & Inference_ms <= Upper) %>%
+  ungroup() %>%
+  select(-Q1, -Q3, -IQR_val, -Upper, -Lower)
 
-# --- PLOT 1: F1-Score Decay ---
-# Using stat_summary for efficient plotting of large datasets
+# ==========================================
+# PLOT 1: F1-SCORE DECAY
+# ==========================================
 p1 <- ggplot(data_objects_only, aes(x = Normalized_Stress, y = F1_Score, color = Model)) +
   stat_summary(fun = mean, geom = "line", linewidth = 1.2) +
   stat_summary(fun.data = mean_se, geom = "ribbon", aes(fill = Model), alpha = 0.1, color = NA) +
-  facet_wrap(~Degradation_Type) +
-  theme_minimal() +
-  scale_x_continuous(labels = percent) +
-  scale_y_continuous(labels = percent) + # Removed fixed 0-1 limits to see decay clearly
-  geom_hline(yintercept = 0.5, linetype = "dashed", color = "red", alpha = 0.5) +
-  labs(title = "YOLO Architecture Robustness: F1-Score Decay",
-       subtitle = "Analysis of frames containing objects; Shaded area = Standard Error",
-       x = "Normalized Stress Level",
-       y = "F1-Score") +
+  facet_wrap(~ Degradation_Type, scales = "free_x") +
+  theme_minimal(base_size = 14) +
+  labs(title = "Classification Reliability: F1 Score vs. Environmental Stress",
+       x = "Normalized Stress (0 = Clean, 1 = Max Degradation)",
+       y = "Mean F1 Score") +
   theme(legend.position = "bottom")
 
-ggsave("f1_decay.png", plot = p1, width = 10, height = 6)
+ggsave("f1_decay.png", plot = p1, width = 12, height = 6, dpi = 300)
 
-# --- PLOT 2: Precision vs. Recall Divergence ---
-metrics_summary <- data_objects_only %>%
-  group_by(Model, Degradation_Type, Normalized_Stress) %>%
-  summarise(
-    Precision = mean(mAP_50),
-    Recall = mean(Recall),
-    .groups = 'drop'
-  ) %>%
-  pivot_longer(cols = c(Precision, Recall), names_to = "Metric", values_to = "Value")
-
-p2 <- ggplot(metrics_summary, aes(x = Normalized_Stress, y = Value, color = Metric)) +
-  geom_line(linewidth = 1) +
-  facet_grid(Degradation_Type ~ Model) +
-  theme_light() +
-  scale_x_continuous(labels = percent) +
-  scale_y_continuous(labels = percent) +
-  scale_color_manual(values = c("Precision" = "#1b9e77", "Recall" = "#d95f02")) +
-  labs(title = "Failure Mode Analysis: Precision vs. Recall",
-       subtitle = "Visualizing the cross-over point where thermal noise breaks detection",
-       x = "Normalized Stress Intensity",
-       y = "Mean Score") +
+# ==========================================
+# PLOT 2: mAP_COCO CURVED DECAY
+# ==========================================
+p2 <- ggplot(data_objects_only, aes(x = Normalized_Stress, y = mAP_COCO, color = Model, fill = Model)) +
+  geom_point(alpha = 0.05, size = 0.5) +
+  # Using poly(x, 2) to show the 'cliff' without crashing memory
+  geom_smooth(method = "lm", formula = y ~ poly(x, 2), se = TRUE, linewidth = 1.2) +
+  facet_wrap(~ Degradation_Type, scales = "free_x") +
+  theme_minimal(base_size = 14) +
+  labs(title = "Localization Accuracy (mAP) vs. Environmental Stress",
+       x = "Normalized Stress (0 = Clean, 1 = Max Degradation)",
+       y = "mAP@[0.50:0.95]") +
   theme(legend.position = "bottom")
 
-ggsave("precision_recall_divergence.png", plot = p2, width = 12, height = 6)
+ggsave("map_curved_decay.png", plot = p2, width = 12, height = 6, dpi = 300)
 
-# --- PLOT 3: Latency Distribution ---
-p3 <- ggplot(data_clean, aes(x = Model, y = Inference_ms, fill = Model)) +
-  geom_boxplot(alpha = 0.7, outlier.shape = NA) +
-  coord_cartesian(ylim = c(0, 30)) +
-  theme_bw() +
-  labs(title = "Inference Latency Distribution (v11 vs v12 vs v26)",
-       x = "YOLO Architecture",
-       y = "Inference Time (ms)") +
+# ==========================================
+# PLOT 3: LATENCY (CLEANED BY IQR)
+# ==========================================
+p3 <- ggplot(data_clean_latency, aes(x = Normalized_Stress, y = Inference_ms, color = Model)) +
+  stat_summary(fun = mean, geom = "line", linewidth = 1.2) +
+  stat_summary(fun.data = mean_se, geom = "ribbon", aes(fill = Model), alpha = 0.2, color = NA) +
+  facet_wrap(~ Degradation_Type, scales = "free_x") +
+  theme_minimal(base_size = 14) +
+  labs(title = "Computational Cost: Inference Latency vs. Environmental Stress",
+       subtitle = "Cleaned using Tukey's Fence (IQR) to remove hardware jitter",
+       x = "Normalized Stress (0 = Clean, 1 = Max Degradation)",
+       y = "Mean Inference Time (ms)") +
+  theme(legend.position = "bottom")
+
+ggsave("latency_line_ribbon.png", plot = p3, width = 12, height = 6, dpi = 300)
+
+# ==========================================
+# PLOT 4: PARETO EFFICIENCY (CLEANED)
+# ==========================================
+pareto_data <- data_clean_latency %>%
+  group_by(Model, Degradation_Type) %>%
+  summarize(Mean_mAP = mean(mAP_COCO, na.rm = TRUE),
+            Mean_Latency = mean(Inference_ms, na.rm = TRUE),
+            .groups = 'drop')
+
+p4 <- ggplot(pareto_data, aes(x = Mean_Latency, y = Mean_mAP, color = Model)) +
+  geom_point(size = 6, alpha = 0.8) +
+  geom_text(aes(label = Model), vjust = -2, fontface = "bold", show.legend = FALSE) +
+  facet_wrap(~ Degradation_Type, scales = "free") +
+  theme_minimal(base_size = 14) +
+  # Ensure labels are visible
+  scale_y_continuous(labels = scales::percent_format(), expand = expansion(mult = c(0.2, 0.2))) +
+  scale_x_continuous(expand = expansion(mult = c(0.2, 0.2))) +
+  labs(title = "Pareto Efficiency: Speed vs. Quality",
+       subtitle = "Calculated using IQR-cleaned latency for precise hardware profiling",
+       x = "Mean Inference Time (ms)",
+       y = "Mean mAP@[0.50:0.95]") +
   theme(legend.position = "none")
 
-ggsave("latency_comparison.png", plot = p3, width = 8, height = 6)
+ggsave("pareto_efficiency.png", plot = p4, width = 12, height = 6, dpi = 300)
 
-# --- PLOT 4: Pareto Efficiency (Zoomed) ---
-# We calculate averages per model/degradation type
-pareto_data <- data_clean %>%
-  group_by(Model, Degradation_Type) %>%
-  summarize(
-    mean_latency = mean(Inference_ms, na.rm = TRUE),
-    mean_map_coco = mean(mAP_COCO, na.rm = TRUE),
-    .groups = 'drop'
-  )
-
-p4 <- ggplot(pareto_data, aes(x = mean_latency, y = mean_map_coco, color = Model, shape = Degradation_Type)) +
-  geom_point(size = 6, alpha = 0.8) +
-  # Using ggrepel-style logic to separate labels if needed
-  geom_text(aes(label = Model), vjust = -1.5, fontface = "bold", show.legend = FALSE) +
-  theme_minimal() +
-  # CRITICAL: No forced limits here so the points separate vertically
-  scale_y_continuous(labels = percent) +
-  labs(title = "Pareto Efficiency: Speed vs. Quality (mAP_COCO)",
-       subtitle = "Zoomed view: Visualizing small performance gaps in thermal sensing",
-       x = "Mean Inference Time (ms)",
-       y = "Mean mAP (IoU 0.50:0.95)") +
-  theme(legend.position = "right")
-
-ggsave("pareto_efficiency.png", plot = p4, width = 9, height = 6)
-
-# --- FINAL SUMMARY PRINT ---
-cat("\n--- Object-Focused Performance Table ---\n")
-print(as.data.frame(pareto_data %>% arrange(desc(mean_map_coco))))
-
+cat("Successfully generated all cleaned thesis plots!\n")
