@@ -46,5 +46,5 @@ reg_latency_res <- lmer(Inference_ms ~ Model * Normalized_Stress + (1 | Image), 
 # 5. Generate the side-by-side Thesis Table
 tab_model(reg_latency_noise, reg_latency_res,
           dv.labels = c("Latency: Noise Degradation", "Latency: Resolution Degradation"),
-          title = "Mixed-Effects Regression on Inference Time (ms) - IQR Cleaned",
+          title = "Table 1: Mixed-Effects Regression on Inference Time (ms) - IQR Cleaned",
           file = "Latency_Separated_Results.html")
