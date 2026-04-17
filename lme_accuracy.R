@@ -34,4 +34,4 @@ summary(reg_noise)
 tab_model(reg_noise, reg_res,
           dv.labels = c("Model 1: Noise Degradation", "Model 2: Resolution Degradation"),
           title = "Mixed-Effects Regression on mAP_COCO",
-          file = "Regression_Results.html")
+          file = "lme_results.html")

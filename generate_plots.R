@@ -55,20 +55,20 @@ p1 <- ggplot(data_objects_only, aes(x = Normalized_Stress, y = F1_Score, color =
 ggsave("f1_decay.png", plot = p1, width = 12, height = 6, dpi = 300)
 
 # ==========================================
-# PLOT 2: mAP_COCO CURVED DECAY
+# PLOT2: mAP_COCO DECAY
 # ==========================================
-p2 <- ggplot(data_objects_only, aes(x = Normalized_Stress, y = mAP_COCO, color = Model, fill = Model)) +
-  geom_point(alpha = 0.05, size = 0.5) +
-  # Using poly(x, 2) to show the 'cliff' without crashing memory
-  geom_smooth(method = "lm", formula = y ~ poly(x, 2), se = TRUE, linewidth = 1.2) +
+p_map <- ggplot(data_objects_only, aes(x = Normalized_Stress, y = mAP_COCO, color = Model)) +
+  stat_summary(fun = mean, geom = "line", linewidth = 1.2) +
+  stat_summary(fun.data = mean_se, geom = "ribbon", aes(fill = Model), alpha = 0.1, color = NA) +
   facet_wrap(~ Degradation_Type, scales = "free_x") +
   theme_minimal(base_size = 14) +
-  labs(title = "Localization Accuracy (mAP) vs. Environmental Stress",
+  labs(title = "Localization Accuracy: mAP vs. Environmental Stress",
        x = "Normalized Stress (0 = Clean, 1 = Max Degradation)",
-       y = "mAP@[0.50:0.95]") +
+       y = "Mean mAP@[0.50:0.95]") +
   theme(legend.position = "bottom")
 
-ggsave("map_curved_decay.png", plot = p2, width = 12, height = 6, dpi = 300)
+ggsave("map_decay.png", plot = p_map, width = 12, height = 6, dpi = 300)
+
 
 # ==========================================
 # PLOT 3: LATENCY (CLEANED BY IQR)

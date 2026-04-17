@@ -1,65 +1,54 @@
-# --- Load Libraries ---
 library(tidyverse)
 library(sjPlot)
-library(drc) # Now this will work!
+library(drc)
 
-# 1. LOAD DATA (Semicolon separator)
+# 1. LOAD AND PREP
 data <- read.csv("LME_Ready_Data_Degraded.csv", sep = ";")
-
-# 2. PREP DATA
-# Use only frames with objects and set the baseline model
 data_valid <- data %>% filter(mAP_50 >= 0)
 data_valid$Model <- factor(data_valid$Model, levels = c("YOLO11n", "YOLO12n", "YOLO26n"))
 
-# =======================================================
-# MODEL A: RESOLUTION ACCURACY (Polynomial Curve)
-# =======================================================
-# We use a 2nd-order polynomial to catch the accelerating decay waterfall
+# --- A. RESOLUTION ANALYSIS (POLYNOMIAL) ---
 res_data <- data_valid %>% filter(Degradation_Type == "resolution")
-reg_res_poly <- lm(mAP_COCO ~ Model * poly(Normalized_Stress, 2), data = res_data)
 
-# This will create a professional table with the quadratic (poly2) coefficients
-tab_model(reg_res_poly,
-          title = "Table 2: Resolution Accuracy Decay - Polynomial Analysis",
-          file = "Resolution_Performance_Results.html")
+# Model for mAP
+reg_res_map <- lm(mAP_COCO ~ Model * poly(Normalized_Stress, 2), data = res_data)
+# Model for F1
+reg_res_f1 <- lm(F1_Score ~ Model * poly(Normalized_Stress, 2), data = res_data)
+
+tab_model(reg_res_map, reg_res_f1,
+          dv.labels = c("mAP_COCO (Resolution)", "F1-Score (Resolution)"),
+          title = "Table: Resolution Decay Comparison",
+          file = "Resolution_mAP_vs_F1.html")
 
 
-# =======================================================
-# MODEL B: NOISE ACCURACY (Cubic Polynomial + Sigmoidal Failure Thresholds)
-# =======================================================
-# --- NOISE ACCURACY (Cubic Polynomial) ---
-# We use poly(x, 3) to capture the "S-Curve" cliff of Gaussian Noise
+# --- B. NOISE ANALYSIS (CUBIC) ---
 noise_data <- data_valid %>% filter(Degradation_Type == "noise")
 
-reg_noise_cubic <- lm(mAP_COCO ~ Model * poly(Normalized_Stress, 3), data = noise_data)
+# Model for mAP
+reg_noise_map <- lm(mAP_COCO ~ Model * poly(Normalized_Stress, 3), data = noise_data)
+# Model for F1
+reg_noise_f1 <- lm(F1_Score ~ Model * poly(Normalized_Stress, 3), data = noise_data)
 
-# Generate the formal table with p-values
-tab_model(reg_noise_cubic,
-          title = "Table 3: Noise Accuracy Decay - Cubic Polynomial Analysis",
-          file = "Noise_Cubic_Results.html")
+tab_model(reg_noise_map, reg_noise_f1,
+          dv.labels = c("mAP_COCO (Noise)", "F1-Score (Noise)"),
+          title = "Table: Noise Decay Comparison (Cubic)",
+          file = "Noise_mAP_vs_F1.html")
 
-# 1. Group the data to get the average 'Cliff' path for each model
-noise_data_agg <- data_valid %>%
-  filter(Degradation_Type == "noise") %>%
-  group_by(Model, Normalized_Stress) %>%
-  summarize(Mean_mAP = mean(mAP_COCO), .groups = 'drop')
 
-# 2. Fit the Sigmoidal (4-Parameter Logistic) model
-# This mathematically fits the 'S-Curve' you saw in the graphs
-fit_noise_sigmoid <- drm(Mean_mAP ~ Normalized_Stress, curveid = Model,
-                         data = noise_data_agg, fct = L.4())
+# --- C. NOISE FAILURE THRESHOLDS (ED50) ---
+# Function to get ED50 for a specific metric
+get_ed50 <- function(metric_name) {
+  df_agg <- noise_data %>%
+    group_by(Model, Normalized_Stress) %>%
+    summarize(m = mean(get(metric_name)), .groups = 'drop')
 
-# 3. Calculate the "ED50" (Effective Degradation 50%)
-# This tells the EXACT stress level where each model collapsed by 50%
-thresholds <- as.data.frame(ED(fit_noise_sigmoid, 50, interval = "delta"))
-thresholds$Model <- rownames(thresholds)
+  fit <- drm(m ~ Normalized_Stress, curveid = Model, data = df_agg, fct = L.4())
+  res <- as.data.frame(ED(fit, 50, interval = "delta"))
+  res$Metric <- metric_name
+  res$Model <- rownames(res)
+  return(res)
+}
 
-# Rename columns for the thesis table
-colnames(thresholds) <- c("Failure_Threshold_ED50", "Std_Error", "Lower_CI", "Upper_CI", "Model_ID")
+ed50_combined <- rbind(get_ed50("mAP_COCO"), get_ed50("F1_Score"))
 
-# 4. Generate the HTML table for your Noise results
-tab_df(thresholds,
-       title = "Table 4: Noise Robustness - Sigmoidal Failure Thresholds (ED50)",
-       file = "Noise_Failure_Thresholds.html")
-
-cat("Success! Check your folder for Resolution_Performance_Results.html and Noise_Failure_Thresholds.html")
+tab_df(ed50_combined, title = "Table: Failure Thresholds (mAP vs F1)", file = "Noise_Failure_Thresholds_Comparison.html")
