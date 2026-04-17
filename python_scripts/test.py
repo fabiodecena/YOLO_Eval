@@ -3,7 +3,7 @@ import pandas as pd
 
 def run_test():
     # Load the model (Fusion happens here)
-    model = YOLO(r'C:\Users\fabio\PycharmProjects\YOLO_Eval\runs\detect\flir_thermal_yolo11\weights\best.pt')
+    model = YOLO(r'/runs/detect/flir_thermal_yolo11/weights/best.pt')
 
     # Run Validation on the TEST split
     # This will generate the visual charts and the stats

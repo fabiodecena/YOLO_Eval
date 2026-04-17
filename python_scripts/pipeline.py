@@ -19,8 +19,8 @@ NOISE_LEVELS = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80
 RES_LEVELS = [1.0, 0.95, 0.90, 0.85, 0.80, 0.75, 0.70, 0.65, 0.60, 0.55, 0.50, 0.45, 0.40, 0.35, 0.30, 0.25, 0.20, 0.15,
               0.10, 0.05]
 
-IMAGES_DIR = 'datasets/FLIR/images/test'
-LABELS_DIR = 'datasets/FLIR/labels/test'
+IMAGES_DIR = '../datasets/FLIR/images/test'
+LABELS_DIR = '../datasets/FLIR/labels/test'
 OUTPUT_CSV = 'LME_Ready_Data_Degraded.csv'
 
 

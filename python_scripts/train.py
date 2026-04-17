@@ -4,7 +4,7 @@ from ultralytics import YOLO
 def run_transfer_learning():
     # 1. Load the model
     # The 'n' indicates the nano version, suitable for drone/edge deployment.
-    model = YOLO('yolo26n.pt')
+    model = YOLO('../yolo26n.pt')
 
     # 2. Automatically select device
     # Uses GPU (0) if available, otherwise falls back to CPU
