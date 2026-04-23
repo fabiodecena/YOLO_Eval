@@ -40,8 +40,8 @@ data_noise <- data_clean %>% filter(Degradation_Type == "noise")
 data_res <- data_clean %>% filter(Degradation_Type == "resolution")
 
 # 4. Run the two separated models for Inference Time
-reg_latency_noise <- lmer(Inference_ms ~ Model * Normalized_Stress + (1 | Image), data = data_noise)
-reg_latency_res <- lmer(Inference_ms ~ Model * Normalized_Stress + (1 | Image), data = data_res)
+reg_latency_noise <- lmer(Inference_ms ~ Model * Normalized_Stress + (1 | Sequence/Image), data = data_noise)
+reg_latency_res <- lmer(Inference_ms ~ Model * Normalized_Stress + (1 | Sequence/Image), data = data_res)
 
 # 5. Generate the side-by-side Thesis Table
 tab_model(reg_latency_noise, reg_latency_res,

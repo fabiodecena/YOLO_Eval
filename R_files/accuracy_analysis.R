@@ -11,9 +11,9 @@ data_valid$Model <- factor(data_valid$Model, levels = c("YOLO11n", "YOLO12n", "Y
 res_data <- data_valid %>% filter(Degradation_Type == "resolution")
 
 # Model for mAP
-reg_res_map <- lm(mAP_COCO ~ Model * poly(Normalized_Stress, 2), data = res_data)
+reg_res_map <- lmer(mAP_COCO ~ Model * poly(Normalized_Stress, 2) + (1 | Sequence/Image), data = res_data)
 # Model for F1
-reg_res_f1 <- lm(F1_Score ~ Model * poly(Normalized_Stress, 2), data = res_data)
+reg_res_f1 <- lmer(F1_Score ~ Model * poly(Normalized_Stress, 2) + (1 | Sequence/Image), data = res_data)
 
 tab_model(reg_res_map, reg_res_f1,
           dv.labels = c("mAP_COCO (Resolution)", "F1-Score (Resolution)"),
@@ -25,9 +25,9 @@ tab_model(reg_res_map, reg_res_f1,
 noise_data <- data_valid %>% filter(Degradation_Type == "noise")
 
 # Model for mAP
-reg_noise_map <- lm(mAP_COCO ~ Model * poly(Normalized_Stress, 3), data = noise_data)
+reg_noise_map <- lmer(mAP_COCO ~ Model * poly(Normalized_Stress, 3) + (1 | Sequence/Image), data = noise_data)
 # Model for F1
-reg_noise_f1 <- lm(F1_Score ~ Model * poly(Normalized_Stress, 3), data = noise_data)
+reg_noise_f1 <- lmer(F1_Score ~ Model * poly(Normalized_Stress, 3) + (1 | Sequence/Image), data = noise_data)
 
 tab_model(reg_noise_map, reg_noise_f1,
           dv.labels = c("mAP_COCO (Noise)", "F1-Score (Noise)"),

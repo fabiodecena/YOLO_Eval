@@ -23,8 +23,8 @@ data_res <- data %>% filter(Degradation_Type == "resolution")
 # 2. Run the Mixed-Effects Regressions
 # Formula: mAP_COCO depends on Model + Stress + (Model interacting with Stress),
 # while accounting for the baseline difficulty of the individual Image.
-reg_noise <- lmer(mAP_COCO ~ Model * Normalized_Stress + (1 | Image), data = data_noise)
-reg_res <- lmer(mAP_COCO ~ Model * Normalized_Stress + (1 | Image), data = data_res)
+reg_noise <- lmer(mAP_COCO ~ Model * Normalized_Stress + (1 | Sequence/Image), data = data_noise)
+reg_res <- lmer(mAP_COCO ~ Model * Normalized_Stress + (1 | Sequence/Image), data = data_res)
 
 # 3. View the raw mathematical output
 summary(reg_noise)

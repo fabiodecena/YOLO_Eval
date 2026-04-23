@@ -93,9 +93,11 @@ def run_unified_pipeline():
                 for level in levels:
                     if deg_type == 'noise':
                         processed_img = apply_gaussian_noise(original_img, level)
+                        # Normalize the noise level to 0-1 range
                         norm_stress = level / 95.0
                     else:
                         processed_img = apply_res_degradation(original_img, level)
+                        # Normalize the resolution level to 0-1 range
                         norm_stress = 1.0 - ((level - 0.05) / 0.95)
 
                     # Inference
