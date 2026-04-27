@@ -3,7 +3,7 @@ library(sjPlot)
 library(drc)
 
 # 1. LOAD AND PREP
-data <- read.csv("LME_Ready_Data_Degraded.csv", sep = ";")
+data <- read.csv("../database/LME_Ready_Data_Degraded.csv", sep = ";")
 data_valid <- data %>% filter(mAP_50 >= 0)
 data_valid$Model <- factor(data_valid$Model, levels = c("YOLO11n", "YOLO12n", "YOLO26n"))
 

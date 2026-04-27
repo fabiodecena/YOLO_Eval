@@ -7,7 +7,7 @@ library(lmerTest) # Adds p-values to lme4 models
 library(sjPlot)   # Creates publication-ready tables
 
 # 1. Load and prep data
-data <- read.csv("LME_Ready_Data_Degraded.csv")
+data <- read.csv("../database/LME_Ready_Data_Degraded.csv")
 
 # Ensure we are only looking at valid frames
 data <- data %>% filter(mAP_50 >= 0)
@@ -30,7 +30,7 @@ reg_res <- lmer(mAP_COCO ~ Model * Normalized_Stress + (1 | Sequence/Image), dat
 summary(reg_noise)
 
 # 4. Generate a Thesis-Ready HTML Table
-# This will create a file called "Regression_Results.html".
+# This will create a file called "lme_Results.html".
 tab_model(reg_noise, reg_res,
           dv.labels = c("Model 1: Noise Degradation", "Model 2: Resolution Degradation"),
           title = "Mixed-Effects Regression on mAP_COCO",

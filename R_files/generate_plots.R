@@ -5,7 +5,7 @@ library(ggplot2)
 # ==========================================
 # 1. LOAD DATA
 # ==========================================
-data <- read.csv("LME_Ready_Data_Degraded.csv", sep = ";")
+data <- read.csv("../database/LME_Ready_Data_Degraded.csv", sep = ";")
 
 # Fix 1: Use dplyr:: explicitly to avoid namespace conflicts
 if ("Unnamed..0" %in% colnames(data)) {

@@ -4,7 +4,7 @@ library(lmerTest)
 library(sjPlot)
 
 # 1. Load Data
-data <- read.csv("LME_Ready_Data_Degraded.csv", sep = ";")
+data <- read.csv("../database/LME_Ready_Data_Degraded.csv", sep = ";")
 
 # Clean pandas index column if present
 if ("Unnamed..0" %in% colnames(data)) {
