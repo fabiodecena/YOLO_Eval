@@ -3,6 +3,14 @@ library(scales)
 library(ggplot2)
 
 # ==========================================
+# 0. DEFINE CONSISTENT COLOR PALETTE
+# ==========================================
+# Enforcing YOLO11 = Red, YOLO12 = Green, YOLO26 = Blue
+model_colors <- c("YOLO11n" = "#F8766D",  # Red
+                  "YOLO12n" = "#00BA38",  # Green
+                  "YOLO26n" = "#619CFF")  # Blue
+
+# ==========================================
 # 1. LOAD DATA
 # ==========================================
 data <- read.csv("../database/LME_Ready_Data_Degraded.csv", sep = ";")
@@ -44,6 +52,8 @@ p1 <- ggplot(data_objects_only, aes(x = Normalized_Stress, y = F1_Score, color =
   theme_minimal(base_size = 14) +
   labs(title = "Classification Reliability: F1 Score vs. Environmental Stress",
        x = "Normalized Stress", y = "Mean F1 Score") +
+  scale_color_manual(values = model_colors) +
+  scale_fill_manual(values = model_colors) +
   theme(legend.position = "bottom")
 
 ggsave("f1_decay.png", plot = p1, width = 12, height = 6, dpi = 300)
@@ -58,6 +68,8 @@ p_map <- ggplot(data_objects_only, aes(x = Normalized_Stress, y = mAP_COCO, colo
   theme_minimal(base_size = 14) +
   labs(title = "Localization Accuracy: mAP vs. Environmental Stress",
        x = "Normalized Stress", y = "Mean mAP@[0.50:0.95]") +
+  scale_color_manual(values = model_colors) +
+  scale_fill_manual(values = model_colors) +
   theme(legend.position = "bottom")
 
 ggsave("map_decay.png", plot = p_map, width = 12, height = 6, dpi = 300)
@@ -73,6 +85,8 @@ p3 <- ggplot(data_clean_latency, aes(x = Normalized_Stress, y = Inference_ms, co
   labs(title = "Latency Trends vs. Stress",
        subtitle = "Cleaned using Tukey's Fence (IQR)",
        x = "Normalized Stress", y = "Inference Time (ms)") +
+  scale_color_manual(values = model_colors) +
+  scale_fill_manual(values = model_colors) +
   theme(legend.position = "bottom")
 
 ggsave("latency_line_ribbon.png", plot = p3, width = 12, height = 6, dpi = 300)
@@ -92,7 +106,8 @@ p4 <- ggplot(pareto_data, aes(x = Mean_Latency, y = Mean_mAP, color = Model)) +
   theme_minimal(base_size = 14) +
   scale_y_continuous(labels = scales::percent_format(), expand = expansion(mult = c(0.2, 0.2))) +
   scale_x_continuous(expand = expansion(mult = c(0.2, 0.2))) +
-  labs(title = "Pareto Efficiency: Speed vs. Quality", x = "Mean Latency (ms)", y = "Mean mAP")
+  labs(title = "Pareto Efficiency: Speed vs. Quality", x = "Mean Latency (ms)", y = "Mean mAP") +
+  scale_color_manual(values = model_colors)
 
 ggsave("pareto_efficiency.png", plot = p4, width = 12, height = 6, dpi = 300)
 
@@ -107,16 +122,15 @@ p5 <- ggplot(data_clean_latency, aes(x = Model, y = Inference_ms, fill = Model))
        subtitle = "Distribution of pure inference times (IQR Cleaned)",
        x = "YOLO Architecture",
        y = "Inference Time (ms)") +
+  scale_fill_manual(values = model_colors) +
   theme(legend.position = "none",
-        strip.text = element_text(face = "bold", size = 14)) +
-  scale_fill_brewer(palette = "Set1")
+        strip.text = element_text(face = "bold", size = 14))
 
 ggsave("latency_comparison_boxplot_split.png", plot = p5, width = 10, height = 6, dpi = 300)
 
 # ==========================================
 # PLOT 6: OVERALL ROBUSTNESS (AUC / MEAN PERFORMANCE) - mAP
 # ==========================================
-# Calculate the overall mean performance across all stress levels
 robustness_data <- data_objects_only %>%
   group_by(Model, Degradation_Type) %>%
   summarize(
@@ -126,9 +140,7 @@ robustness_data <- data_objects_only %>%
   )
 
 p6 <- ggplot(robustness_data, aes(x = Degradation_Type, y = Mean_mAP, fill = Model)) +
-  # Use geom_col for a clean Bar Chart, grouped side-by-side
   geom_col(position = position_dodge(width = 0.8), width = 0.7, color = "black", alpha = 0.85) +
-  # Add the exact percentages on top of the bars!
   geom_text(aes(label = scales::percent(Mean_mAP, accuracy = 0.1)),
             position = position_dodge(width = 0.8), vjust = -0.5, fontface = "bold") +
   theme_minimal(base_size = 14) +
@@ -136,9 +148,8 @@ p6 <- ggplot(robustness_data, aes(x = Degradation_Type, y = Mean_mAP, fill = Mod
        subtitle = "Calculated as the total mean accuracy across the entire 0.0 to 1.0 stress spectrum",
        x = "Environmental Stressor",
        y = "Mean mAP@[0.50:0.95] (Higher is more robust)") +
-  # Expand the Y-axis slightly so the text labels don't get cut off
   scale_y_continuous(labels = scales::percent_format(), expand = expansion(mult = c(0, 0.15))) +
-  scale_fill_brewer(palette = "Set1") +
+  scale_fill_manual(values = model_colors) +
   theme(legend.position = "bottom",
         axis.text.x = element_text(face = "bold", size = 12))
 
@@ -157,7 +168,7 @@ p7 <- ggplot(robustness_data, aes(x = Degradation_Type, y = Mean_F1, fill = Mode
        x = "Environmental Stressor",
        y = "Mean F1-Score (Higher is more robust)") +
   scale_y_continuous(labels = scales::percent_format(), expand = expansion(mult = c(0, 0.15))) +
-  scale_fill_brewer(palette = "Set1") +
+  scale_fill_manual(values = model_colors) +
   theme(legend.position = "bottom",
         axis.text.x = element_text(face = "bold", size = 12))
 
