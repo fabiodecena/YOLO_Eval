@@ -1,6 +1,7 @@
 library(tidyverse)
 library(sjPlot)
 library(drc)
+library(lmerTest)
 
 # 1. LOAD AND PREP
 data <- read.csv("../database/LME_Ready_Data_Degraded.csv", sep = ";")
@@ -35,20 +36,39 @@ tab_model(reg_noise_map, reg_noise_f1,
           file = "Noise_mAP_vs_F1.html")
 
 
-# --- C. NOISE FAILURE THRESHOLDS (ED50) ---
-# Function to get ED50 for a specific metric
-get_ed50 <- function(metric_name) {
-  df_agg <- noise_data %>%
-    group_by(Model, Normalized_Stress) %>%
-    summarize(m = mean(get(metric_name)), .groups = 'drop')
+# --- C. FAILURE THRESHOLDS (ED50) FOR BOTH DEGRADATIONS ---
 
+# Function to get ED50 for a specific metric and specific degradation type
+get_ed50 <- function(dataset, metric_name, deg_type) {
+  df_agg <- dataset %>%
+    filter(Degradation_Type == deg_type) %>%
+    group_by(Model, Normalized_Stress) %>%
+    summarize(m = mean(get(metric_name), na.rm = TRUE), .groups = 'drop')
+
+  # Fit the dose-response model
   fit <- drm(m ~ Normalized_Stress, curveid = Model, data = df_agg, fct = L.4())
-  res <- as.data.frame(ED(fit, 50, interval = "delta"))
+  res <- as.data.frame(ED(fit, 50, interval = "delta", display = FALSE))
+
+  # Clean up the output table structure
   res$Metric <- metric_name
-  res$Model <- rownames(res)
+  res$Degradation <- deg_type
+
+  # Reorder columns
+  res <- res[, c("Degradation", "Model", "Metric", "Estimate", "Std. Error", "Lower", "Upper")]
   return(res)
 }
 
-ed50_combined <- rbind(get_ed50("mAP_COCO"), get_ed50("F1_Score"))
+# Calculate all four combinations
+ed50_noise_map <- get_ed50(data_objects_only, "mAP_COCO", "noise")
+ed50_noise_f1  <- get_ed50(data_objects_only, "F1_Score", "noise")
 
-tab_df(ed50_combined, title = "Table: Failure Thresholds (mAP vs F1)", file = "Noise_Failure_Thresholds_Comparison.html")
+ed50_res_map <- get_ed50(data_objects_only, "mAP_COCO", "resolution")
+ed50_res_f1  <- get_ed50(data_objects_only, "F1_Score", "resolution")
+
+# Bind them all into one master table
+ed50_combined <- rbind(ed50_noise_map, ed50_noise_f1, ed50_res_map, ed50_res_f1)
+
+# Generate the HTML Table
+tab_df(ed50_combined,
+       title = "Table 2: Effective Dose 50% (ED50) Failure Thresholds",
+       file = "Master_Failure_Thresholds.html")

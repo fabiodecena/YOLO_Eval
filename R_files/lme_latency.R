@@ -48,3 +48,10 @@ tab_model(reg_latency_noise, reg_latency_res,
           dv.labels = c("Latency: Noise Degradation", "Latency: Resolution Degradation"),
           title = "Table 1: Mixed-Effects Regression on Inference Time (ms) - IQR Cleaned",
           file = "Latency_Separated_Results.html")
+
+          
+# Get the exact confidence interval for the Noise intercept
+confint(reg_latency_noise, parm = "(Intercept)", method = "Wald")
+
+# Get the exact confidence interval for the Resolution intercept
+confint(reg_latency_res, parm = "(Intercept)", method = "Wald")
