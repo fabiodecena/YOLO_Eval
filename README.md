@@ -3,7 +3,9 @@
 **A Regression-Based Analysis of Performance in Degraded Thermal Imagery for Anti-Poaching: Identifying Failure Thresholds in YOLOv11, v12, and 26 Architectures under Controlled Stress Conditions**
 
 **Author:** Dr. Fabio De Cena 
+
 **Institution:** International University of Applied Sciences (IU) 
+
 **Degree:** Bachelor of Science in Software Development
 
 ---
@@ -12,7 +14,7 @@
 
 This repository contains the code and materials for a B.Sc. thesis project evaluating the operational limits of YOLO (You Only Look Once) object detection models in the context of nocturnal wildlife conservation. The deployment of automated surveillance systems, particularly unmanned aerial vehicles (UAVs) equipped with thermal infrared (TIR) computer vision, is a fundamental tool for protecting endangered species. However, conservation drones rely on resource-constrained edge devices and uncooled microbolometer cameras that are vulnerable to heat buildup and changing atmospheric conditions. 
 
-This project investigates the architectural resilience of three nano-scale YOLO variants (YOLO11n, YOLO12n, YOLO26n) when subjected to simulated environmental stress. The experimental framework utilizes a Python-controlled pipeline to inject synthetic spatial downscaling (simulating altitude blur) and Additive White Gaussian Noise (AWGN, simulating thermal sensor drift) into the Teledyne FLIR Thermal dataset. Through comprehensive hardware profiling and statistical modeling (including Linear Mixed-Effects models and Dose-Response ED50 extraction), the research maps the exact degradation curves for Mean Average Precision (mAP), F1-score, and computational latency (ms) to provide actionable deployment hypotheses for edge computing constraints.
+This project investigates the architectural resilience of three nano-scale YOLO variants (YOLO11n, YOLO12n, YOLO26n) when subjected to simulated environmental stress. The experimental framework uses a Python-controlled pipeline to inject synthetic spatial downscaling (simulating altitude blur) and Additive White Gaussian Noise (AWGN, simulating thermal sensor drift) into the Teledyne FLIR Thermal dataset. Through comprehensive hardware profiling and statistical modeling (including Linear Mixed-Effects models and Dose-Response ED50 extraction), the research maps the degradation curves for Mean Average Precision (mAP), F1-score, and computational latency (ms) to provide some deployment hypotheses for edge computing systems.
 
 ---
 
