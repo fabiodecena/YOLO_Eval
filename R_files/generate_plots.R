@@ -15,7 +15,7 @@ model_colors <- c("YOLO11n" = "#F8766D",  # Red
 # ==========================================
 data <- read.csv("../database/LME_Ready_Data_Degraded.csv", sep = ";")
 
-# Fix 1: Use dplyr:: explicitly to avoid namespace conflicts
+# Use dplyr:: explicitly to avoid namespace conflicts
 if ("Unnamed..0" %in% colnames(data)) {
   data <- data %>% dplyr::select(-Unnamed..0)
 }
@@ -37,7 +37,7 @@ data_clean_latency <- data_objects_only %>%
     Upper = Q3 + (1.5 * IQR_val),
     Lower = Q1 - (1.5 * IQR_val)
   ) %>%
-  # Fix 2: Use dplyr::filter and dplyr::select here as well!
+  # Use dplyr::filter and dplyr::select here as well!
   dplyr::filter(Inference_ms >= Lower & Inference_ms <= Upper) %>%
   ungroup() %>%
   dplyr::select(-Q1, -Q3, -IQR_val, -Upper, -Lower)

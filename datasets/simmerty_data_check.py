@@ -5,7 +5,6 @@ import random
 
 def visualize_yolo_verification(image_dir, label_dir, output_name="verification_check.jpg"):
     # 1. Get list of all images in the directory
-    # Supported formats for FLIR-v2 are typically .jpg [cite: 102, 103]
     images = [f for f in os.listdir(image_dir) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
 
     if not images:
@@ -13,7 +12,6 @@ def visualize_yolo_verification(image_dir, label_dir, output_name="verification_
         return
 
     # 2. Search for a random image that actually contains a 'person' (Class 0)
-    # This avoids picking one of your ~2,500 background images
     random.shuffle(images)
     selected_img = None
     selected_label_data = []
@@ -71,8 +69,6 @@ def visualize_yolo_verification(image_dir, label_dir, output_name="verification_
 
 
 if __name__ == "__main__":
-    # Update these paths to match your successful conversion output
-    # Based on your previous success message:
     train_images = 'FLIR/images/train/'
     train_labels = 'FLIR/labels/train/'
 

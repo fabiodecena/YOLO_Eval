@@ -80,7 +80,7 @@ def run_unified_pipeline():
             h, w, _ = original_img.shape
 
             gt_boxes, gt_labels = load_gt_for_torchmetrics(lbl_path, w, h, device)
-            # --- THE SPEED OPTIMIZATION ---
+            # --- SPEED OPTIMIZATION ---
             # If the label file is empty or doesn't exist, gt_labels will have length 0.
             # Skip everything below (Noise, Resolution, Inference) for this image.
             if len(gt_labels) == 0:

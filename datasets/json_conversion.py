@@ -9,7 +9,7 @@ def convert_flir_coco_to_yolo(json_path, output_labels_dir, target_class="person
     Converts FLIR-ADAS-v2 coco.json annotations to YOLO .txt format with 1:1 symmetry.
     Ensures every image gets a label file, even if it is empty (background).
     """
-    # 1. CLEAN START: Clear old labels to prevent appending errors
+    # Clear old labels to prevent appending errors
     if os.path.exists(output_labels_dir):
         shutil.rmtree(output_labels_dir)
     os.makedirs(output_labels_dir)
@@ -31,11 +31,11 @@ def convert_flir_coco_to_yolo(json_path, output_labels_dir, target_class="person
 
     target_id = target_cat_ids[0]
 
-    # 2. Map all images to a dictionary to ensure we cover EVERY file
+    # Map all images to a dictionary to cover EVERY file
     images = {img['id']: img for img in data['images']}
     img_to_anns = {img_id: [] for img_id in images.keys()}
 
-    # 3. Group annotations by image ID
+    # Group annotations by image ID
     for ann in data['annotations']:
         if ann['category_id'] == target_id:
             img_to_anns[ann['image_id']].append(ann)
@@ -47,7 +47,7 @@ def convert_flir_coco_to_yolo(json_path, output_labels_dir, target_class="person
         width = img_info['width']
         height = img_info['height']
 
-        # Get clean base name (e.g., 'FLIR_0001')
+        # Get clean base name
         img_filename = os.path.basename(img_info['file_name'])
         base_name = os.path.splitext(img_filename)[0]
         txt_path = os.path.join(output_labels_dir, f"{base_name}.txt")

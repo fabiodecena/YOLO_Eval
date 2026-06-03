@@ -2,7 +2,7 @@ from ultralytics import YOLO
 import pandas as pd
 
 def run_test():
-    # Load the model (Fusion happens here)
+    # Load the model
     model = YOLO(r'/runs/detect/flir_thermal_yolo11/weights/best.pt')
 
     # Run Validation on the TEST split

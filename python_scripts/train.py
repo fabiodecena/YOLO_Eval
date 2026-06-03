@@ -7,7 +7,7 @@ def run_transfer_learning():
     model = YOLO('../yolo26n.pt')
 
     # 2. Automatically select device
-    # Uses GPU (0) if available, otherwise falls back to CPU
+    # Uses GPU (0) if available, otherwise back to CPU
     current_device = 0 if torch.cuda.is_available() else 'cpu'
     print(f"🚀 Using device: {current_device}")
 

@@ -30,7 +30,7 @@ mod_noise_cubic <- lmer(mAP_COCO ~ poly(Normalized_Stress, 3) + (1 | Sequence/Im
 anova_res <- anova(mod_res_linear, mod_res_quad)
 anova_noise <- anova(mod_noise_linear, mod_noise_quad, mod_noise_cubic)
 
-# Print to console just so you can see it while running
+# Print to console just to check while running
 print(anova_res)
 print(anova_noise)
 
